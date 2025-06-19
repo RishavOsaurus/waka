@@ -1,0 +1,481 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Panel - WakaTime</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #111827; /* bg-gray-900 */
+        }
+        .form-input {
+            background-color: #374151; /* bg-gray-700 */
+            border-color: #4b5563; /* border-gray-600 */
+            color: #f3f4f6; /* text-gray-200 */
+        }
+        .form-input:focus {
+            outline: none;
+            border-color: #4f46e5; /* indigo-500 */
+            box-shadow: 0 0 0 2px #4f46e5;
+        }
+        .btn-primary {
+            background-color: #4f46e5; /* indigo-600 */
+            color: white;
+            padding: 0.75rem 1rem;
+            border-radius: 0.5rem;
+            font-weight: 600;
+            transition: background-color 0.3s ease;
+        }
+        .btn-primary:hover {
+            background-color: #4338ca; /* indigo-700 */
+        }
+        .btn-danger {
+            background-color: #dc2626; /* red-600 */
+            color: white;
+            padding: 0.5rem 0.75rem;
+            border-radius: 0.375rem;
+            font-weight: 500;
+            transition: background-color 0.3s ease;
+        }
+        .btn-danger:hover {
+            background-color: #b91c1c; /* red-700 */
+        }
+        .btn-edit {
+            background-color: #f59e0b; /* amber-500 */
+            color: white;
+            padding: 0.5rem 0.75rem;
+            border-radius: 0.375rem;
+            font-weight: 500;
+            transition: background-color 0.3s ease;
+        }
+        .btn-edit:hover {
+            background-color: #d97706; /* amber-600 */
+        }
+        .modal {
+            display: none; /* Hidden by default */
+            position: fixed; /* Stay in place */
+            z-index: 1000; /* Sit on top */
+            left: 0;
+            top: 0;
+            width: 100%; /* Full width */
+            height: 100%; /* Full height */
+            overflow: auto; /* Enable scroll if needed */
+            background-color: rgba(0,0,0,0.7); /* Black w/ opacity */
+            align-items: center;
+            justify-content: center;
+        }
+        .modal-content {
+            background-color: #1f2937; /* gray-800 */
+            margin: auto;
+            padding: 2rem;
+            border-radius: 0.75rem;
+            width: 90%;
+            max-width: 500px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+            animation: fadeIn 0.3s ease-out;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .close-button {
+            color: #aaa;
+            float: right;
+            font-size: 1.75rem;
+            font-weight: bold;
+        }
+        .close-button:hover,
+        .close-button:focus {
+            color: white;
+            text-decoration: none;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col items-center justify-center p-4">
+
+    <div class="w-full max-w-4xl mx-auto">
+        <header class="text-center mb-8">
+            <h1 class="text-4xl font-extrabold text-white tracking-tight" id="headerTitle">Admin Panel Access</h1>
+            <p class="text-gray-400 mt-2" id="headerSubtitle">Enter the password to unlock the admin panel.</p>
+        </header>
+
+        <div id="passwordSection" class="bg-gray-800 rounded-xl shadow-2xl p-8 mb-8">
+            <form id="passwordForm" class="flex flex-col gap-6">
+                <div>
+                    <label for="password" class="block mb-2 text-sm font-medium text-gray-300">Admin Password</label>
+                    <input type="password" id="password" name="password" class="form-input w-full p-3 rounded-lg transition" placeholder="Enter admin password" required>
+                </div>
+                <button type="submit" id="verifyButton" class="w-full btn-primary disabled:opacity-50 disabled:cursor-not-allowed">
+                    Verify Password
+                </button>
+                <div id="passwordMessage" class="mt-4 text-center text-sm font-medium"></div>
+            </form>
+        </div>
+
+        <div id="adminPanelContent" class="hidden">
+            <h2 class="text-3xl font-bold text-white mb-6 text-center">Admin Panel</h2>
+
+            <div class="bg-gray-800 rounded-xl shadow-2xl p-8 mb-8">
+                <h3 class="text-2xl font-semibold text-white mb-4">Add New User</h3>
+                <form id="addUserForm" class="flex flex-col gap-6">
+                    <div>
+                        <label for="addUserName" class="block mb-2 text-sm font-medium text-gray-300">User Name</label>
+                        <input type="text" id="addUserName" name="name" class="form-input w-full p-3 rounded-lg transition" placeholder="e.g., Ada Lovelace" required>
+                    </div>
+                    <div>
+                        <label for="addUserApiKey" class="block mb-2 text-sm font-medium text-gray-300">WakaTime API Key</label>
+                        <input type="password" id="addUserApiKey" name="api_key" class="form-input w-full p-3 rounded-lg transition" placeholder="Enter user's secret API key" required>
+                    </div>
+                    <button type="submit" id="addUserButton" class="w-full btn-primary disabled:opacity-50 disabled:cursor-not-allowed">
+                        Add User
+                    </button>
+                    <div id="addMessage" class="mt-4 text-center text-sm font-medium"></div>
+                </form>
+            </div>
+
+            <div class="bg-gray-800 rounded-xl shadow-2xl p-8">
+                <h3 class="text-2xl font-semibold text-white mb-4">All Users</h3>
+                <div id="usersList" class="overflow-x-auto">
+                    <table class="min-w-full bg-gray-700 rounded-lg overflow-hidden">
+                        <thead>
+                            <tr class="text-left text-gray-300 bg-gray-600">
+                                <th class="py-3 px-4 font-semibold text-sm">Name</th>
+                                <th class="py-3 px-4 font-semibold text-sm">API Key (Masked)</th>
+                                <th class="py-3 px-4 font-semibold text-sm">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="usersTableBody" class="divide-y divide-gray-600">
+                            <tr>
+                                <td colspan="3" class="text-center py-4 text-gray-400">Loading users...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div id="userListMessage" class="mt-4 text-center text-sm font-medium"></div>
+            </div>
+        </div>
+
+        <div class="text-center mt-6">
+            <a href="./leaderboard.html" class="text-indigo-400 hover:text-indigo-300 transition-colors duration-200">&larr; Back to Leaderboard</a>
+        </div>
+    </div>
+
+    <div id="editUserModal" class="modal">
+        <div class="modal-content">
+            <span class="close-button">&times;</span>
+            <h3 class="text-xl font-semibold text-white mb-4">Edit User</h3>
+            <form id="editUserForm" class="flex flex-col gap-4">
+                <input type="hidden" id="editUserId">
+                <div>
+                    <label for="editUserName" class="block mb-2 text-sm font-medium text-gray-300">User Name</label>
+                    <input type="text" id="editUserName" name="name" class="form-input w-full p-3 rounded-lg transition" required>
+                </div>
+                <div>
+                    <label for="editUserApiKey" class="block mb-2 text-sm font-medium text-gray-300">WakaTime API Key</label>
+                    <input type="password" id="editUserApiKey" name="api_key" class="form-input w-full p-3 rounded-lg transition" required>
+                    <button type="button" id="toggleApiKeyVisibility" class="text-xs text-indigo-400 mt-2 hover:underline">Show API Key</button>
+                </div>
+                <button type="submit" id="saveEditButton" class="w-full btn-primary disabled:opacity-50 disabled:cursor-not-allowed">
+                    Save Changes
+                </button>
+                <div id="editMessage" class="mt-4 text-center text-sm font-medium"></div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        const baseUrl = "https://wakatimebackend.vercel.app";
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const passwordSection = document.getElementById('passwordSection');
+            const passwordForm = document.getElementById('passwordForm');
+            const passwordInput = document.getElementById('password');
+            const verifyButton = document.getElementById('verifyButton');
+            const passwordMessageDiv = document.getElementById('passwordMessage');
+
+            const adminPanelContent = document.getElementById('adminPanelContent');
+            const headerTitle = document.getElementById('headerTitle');
+            const headerSubtitle = document.getElementById('headerSubtitle');
+
+            const addUserForm = document.getElementById('addUserForm');
+            const addUserNameInput = document.getElementById('addUserName');
+            const addUserApiKeyInput = document.getElementById('addUserApiKey');
+            const addUserButton = document.getElementById('addUserButton');
+            const addMessageDiv = document.getElementById('addMessage');
+
+            const usersTableBody = document.getElementById('usersTableBody'); // This is our target for event delegation
+            const userListMessageDiv = document.getElementById('userListMessage');
+
+            const editUserModal = document.getElementById('editUserModal');
+            const closeButton = editUserModal.querySelector('.close-button');
+            const editUserForm = document.getElementById('editUserForm');
+            const editUserIdInput = document.getElementById('editUserId');
+            const editUserNameInput = document.getElementById('editUserName');
+            const editUserApiKeyInput = document.getElementById('editUserApiKey');
+            const toggleApiKeyVisibilityButton = document.getElementById('toggleApiKeyVisibility');
+            const saveEditButton = document.getElementById('saveEditButton');
+            const editMessageDiv = document.getElementById('editMessage');
+
+            let isAuthenticated = false;
+
+            // --- Password Verification ---
+            passwordForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                verifyButton.disabled = true;
+                passwordMessageDiv.textContent = '';
+                passwordMessageDiv.className = 'mt-4 text-center text-sm font-medium';
+                verifyButton.textContent = 'Verifying...';
+
+                const password = passwordInput.value;
+
+                try {
+                    const response = await fetch(`${baseUrl}/verify-password`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ password }),
+                    });
+
+                    if (response.ok) {
+                        isAuthenticated = true;
+                        passwordSection.classList.add('hidden');
+                        adminPanelContent.classList.remove('hidden');
+                        headerTitle.textContent = 'WakaTime Admin Panel';
+                        headerSubtitle.textContent = 'Manage users for the WakaTime leaderboard.';
+                        passwordInput.value = ''; // Clear password for security
+                        
+                        await fetchAndDisplayUsers(); // Load users after successful authentication
+                    } else {
+                        const result = await response.json();
+                        passwordMessageDiv.textContent = `Error: ${result.error || 'Invalid password.'}`;
+                        passwordMessageDiv.classList.add('text-red-400');
+                    }
+                } catch (error) {
+                    passwordMessageDiv.textContent = 'Failed to connect to the server.';
+                    passwordMessageDiv.classList.add('text-red-400');
+                } finally {
+                    verifyButton.disabled = false;
+                    verifyButton.textContent = 'Verify Password';
+                }
+            });
+
+            // --- Add User Functionality ---
+            addUserForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                addUserButton.disabled = true;
+                addMessageDiv.textContent = '';
+                addMessageDiv.className = 'mt-4 text-center text-sm font-medium';
+                addUserButton.textContent = 'Adding...';
+
+                const name = addUserNameInput.value;
+                const api_key = addUserApiKeyInput.value;
+
+                try {
+                    const response = await fetch(`${baseUrl}/admin/users`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ name, api_key }),
+                    });
+
+                    const result = await response.json();
+
+                    if (response.status === 201) {
+                        addMessageDiv.textContent = 'User added successfully!';
+                        addMessageDiv.classList.add('text-green-400');
+                        addUserForm.reset();
+                        await fetchAndDisplayUsers(); // Refresh user list
+                    } else {
+                        addMessageDiv.textContent = `Error: ${result.error || 'Something went wrong.'}`;
+                        addMessageDiv.classList.add('text-red-400');
+                    }
+                } catch (error) {
+                    addMessageDiv.textContent = 'Failed to add user. Please ensure the server is running.';
+                    addMessageDiv.classList.add('text-red-400');
+                } finally {
+                    addUserButton.disabled = false;
+                    addUserButton.textContent = 'Add User';
+                }
+            });
+
+            // --- Fetch and Display Users ---
+            async function fetchAndDisplayUsers() {
+                usersTableBody.innerHTML = '<tr><td colspan="3" class="text-center py-4 text-gray-400">Loading users...</td></tr>';
+                userListMessageDiv.textContent = '';
+                userListMessageDiv.className = 'mt-4 text-center text-sm font-medium';
+
+                try {
+                    const response = await fetch(`${baseUrl}/admin/users`);
+                    const result = await response.json();
+
+                    if (response.ok) {
+                        if (result.users.length === 0) {
+                            usersTableBody.innerHTML = '<tr><td colspan="3" class="text-center py-4 text-gray-400">No users found.</td></tr>';
+                        } else {
+                            usersTableBody.innerHTML = ''; // Clear existing rows
+                            result.users.forEach(user => {
+                                const row = document.createElement('tr');
+                                row.className = 'hover:bg-gray-600 transition-colors duration-200';
+                                row.innerHTML = `
+                                    <td class="py-3 px-4 text-gray-200 rounded-bl-lg">${user.name}</td>
+                                    <td class="py-3 px-4 text-gray-300">********${user.api_key.substring(user.api_key.length - 4)}</td>
+                                    <td class="py-3 px-4 text-right space-x-2 rounded-br-lg">
+                                        <button class="btn-edit text-white px-3 py-1 rounded-md" data-id="${user._id}" data-name="${user.name}" data-apikey="${user.api_key}">
+                                            <i class="fas fa-edit mr-1"></i>Edit
+                                        </button>
+                                        <button class="btn-danger text-white px-3 py-1 rounded-md" data-id="${user._id}" data-name="${user.name}">
+                                            <i class="fas fa-trash-alt mr-1"></i>Delete
+                                        </button>
+                                    </td>
+                                `;
+                                usersTableBody.appendChild(row);
+                            });
+                            // Event listeners are now handled by delegation on usersTableBody
+                        }
+                    } else {
+                        userListMessageDiv.textContent = `Error fetching users: ${result.error || 'Something went wrong.'}`;
+                        userListMessageDiv.classList.add('text-red-400');
+                        usersTableBody.innerHTML = '<tr><td colspan="3" class="text-center py-4 text-red-400">Failed to load users.</td></tr>';
+                    }
+                } catch (error) {
+                    userListMessageDiv.textContent = 'Failed to connect to the server to fetch users.';
+                    userListMessageDiv.classList.add('text-red-400');
+                    usersTableBody.innerHTML = '<tr><td colspan="3" class="text-center py-4 text-red-400">Server connection failed.</td></tr>';
+                }
+            }
+
+            // --- Event Delegation for Delete and Edit Buttons ---
+            // Attach a single click listener to the parent element (usersTableBody)
+            usersTableBody.addEventListener('click', (event) => {
+                // Check if the clicked element (or its closest ancestor) is a delete button
+                const deleteButton = event.target.closest('.btn-danger');
+                if (deleteButton) {
+                    handleDeleteClick(deleteButton); // Pass the button element to the handler
+                    return; // Stop further processing if delete button was clicked
+                }
+
+                // Check if the clicked element (or its closest ancestor) is an edit button
+                const editButton = event.target.closest('.btn-edit');
+                if (editButton) {
+                    handleEditClick(editButton); // Pass the button element to the handler
+                    // No return here in case you want other clicks to process, but usually for buttons you'd return.
+                }
+            });
+
+            // --- Delete User Handler (modified to accept the button element directly) ---
+            async function handleDeleteClick(buttonElement) {
+                const userId = buttonElement.dataset.id;
+                const userName = buttonElement.dataset.name;
+
+                if (!confirm(`Are you sure you want to delete user "${userName}"?`)) {
+                    return;
+                }
+
+                userListMessageDiv.textContent = 'Deleting user...';
+                userListMessageDiv.className = 'mt-4 text-center text-sm font-medium text-blue-400';
+
+                try {
+                    const response = await fetch(`${baseUrl}/admin/users/${userId}`, {
+                        method: 'DELETE',
+                    });
+
+                    const result = await response.json();
+
+                    if (response.ok) {
+                        userListMessageDiv.textContent = `User "${userName}" deleted successfully!`;
+                        userListMessageDiv.classList.add('text-green-400');
+                        await fetchAndDisplayUsers(); // Refresh user list
+                    } else {
+                        userListMessageDiv.textContent = `Error deleting user: ${result.error || 'Something went wrong.'}`;
+                        userListMessageDiv.classList.add('text-red-400');
+                    }
+                } catch (error) {
+                    userListMessageDiv.textContent = 'Failed to connect to the server to delete user.';
+                    userListMessageDiv.classList.add('text-red-400');
+                }
+            }
+
+            // --- Edit User Handler (modified to accept the button element directly) ---
+            function handleEditClick(buttonElement) {
+                const userId = buttonElement.dataset.id;
+                const userName = buttonElement.dataset.name;
+                const userApiKey = buttonElement.dataset.apikey;
+
+                editUserIdInput.value = userId;
+                editUserNameInput.value = userName;
+                editUserApiKeyInput.value = userApiKey; // Pre-fill with actual API key
+                editUserApiKeyInput.type = 'password'; // Ensure it's masked initially
+                toggleApiKeyVisibilityButton.textContent = 'Show API Key';
+                editMessageDiv.textContent = '';
+                editMessageDiv.className = 'mt-4 text-center text-sm font-medium';
+
+                editUserModal.style.display = 'flex'; // Show modal
+            }
+
+            // Modal related event listeners (these are fine as they are on static elements)
+            closeButton.addEventListener('click', () => {
+                editUserModal.style.display = 'none'; // Hide modal
+            });
+
+            window.addEventListener('click', (event) => {
+                if (event.target === editUserModal) {
+                    editUserModal.style.display = 'none'; // Hide modal when clicking outside
+                }
+            });
+
+            toggleApiKeyVisibilityButton.addEventListener('click', () => {
+                if (editUserApiKeyInput.type === 'password') {
+                    editUserApiKeyInput.type = 'text';
+                    toggleApiKeyVisibilityButton.textContent = 'Hide API Key';
+                } else {
+                    editUserApiKeyInput.type = 'password';
+                    toggleApiKeyVisibilityButton.textContent = 'Show API Key';
+                }
+            });
+
+            editUserForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                saveEditButton.disabled = true;
+                editMessageDiv.textContent = '';
+                editMessageDiv.className = 'mt-4 text-center text-sm font-medium';
+                saveEditButton.textContent = 'Saving...';
+
+                const userId = editUserIdInput.value;
+                const updatedName = editUserNameInput.value;
+                const updatedApiKey = editUserApiKeyInput.value;
+
+                try {
+                    const response = await fetch(`${baseUrl}/admin/users/${userId}`, {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ name: updatedName, api_key: updatedApiKey }),
+                    });
+
+                    const result = await response.json();
+
+                    if (response.ok) {
+                        editMessageDiv.textContent = 'User updated successfully!';
+                        editMessageDiv.classList.add('text-green-400');
+                        editUserModal.style.display = 'none'; // Hide modal
+                        await fetchAndDisplayUsers(); // Refresh user list
+                    } else {
+                        editMessageDiv.textContent = `Error updating user: ${result.error || 'Something went wrong.'}`;
+                        editMessageDiv.classList.add('text-red-400');
+                    }
+                } catch (error) {
+                    editMessageDiv.textContent = 'Failed to connect to the server to update user.';
+                    editMessageDiv.classList.add('text-red-400');
+                } finally {
+                    saveEditButton.disabled = false;
+                    saveEditButton.textContent = 'Save Changes';
+                }
+            });
+        });
+    </script>
+</body>
+</html>

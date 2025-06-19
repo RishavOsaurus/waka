@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WakaTime Leaderboard</title>
+    <!-- Tailwind CSS for styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts: Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        /* Custom styles for the toggle switch */
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #111827; /* bg-gray-900 */
+            color: #f3f4f6; /* text-gray-200 */
+        }
+        .toggle-checkbox:checked {
+            right: 0;
+            border-color: #4f46e5; /* indigo-600 */
+        }
+        .toggle-checkbox:checked + .toggle-label {
+            background-color: #4f46e5; /* indigo-600 */
+        }
+        .table-rank {
+            font-size: 1.25rem;
+            font-weight: 700;
+            width: 50px;
+            text-align: center;
+        }
+        .loader {
+            border-top-color: #4f46e5;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+    </style>
+</head>
+<body class="min-h-screen flex items-center justify-center p-4">
+
+    <div class="w-full max-w-2xl mx-auto">
+        <header class="text-center mb-8">
+            <h1 class="text-4xl font-bold text-white tracking-tight">WakaTime Leaderboard</h1>
+            <p class="text-gray-400 mt-2">See who's been coding the most!</p>
+        </header>
+
+        <div class="flex justify-between items-center mb-6 flex-wrap gap-4">
+            <!-- Toggle Switch -->
+            <div class="flex items-center space-x-4">
+                <span class="font-medium text-gray-300">Today</span>
+                <div class="relative inline-block w-12 mr-2 align-middle select-none transition duration-200 ease-in">
+                    <input type="checkbox" name="toggle" id="timeRangeToggle" class="toggle-checkbox absolute block w-6 h-6 rounded-full bg-white border-4 appearance-none cursor-pointer"/>
+                    <label for="timeRangeToggle" class="toggle-label block overflow-hidden h-6 rounded-full bg-gray-600 cursor-pointer"></label>
+                </div>
+                <span class="font-medium text-gray-300">Last Week</span>
+            </div>
+
+            <!-- Add User Button -->
+            <a href="./adduser.html" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded-lg shadow-md transition-colors duration-300">
+                Admin Panel
+            </a>
+        </div>
+
+        <!-- Leaderboard Table -->
+        <div class="bg-gray-800 rounded-xl shadow-2xl overflow-hidden">
+            <table class="w-full text-left">
+                <thead class="bg-gray-700">
+                    <tr>
+                        <th class="p-4 text-sm font-semibold text-gray-300 uppercase tracking-wider text-center">Rank</th>
+                        <th class="p-4 text-sm font-semibold text-gray-300 uppercase tracking-wider">Name</th>
+                        <th class="p-4 text-sm font-semibold text-gray-300 uppercase tracking-wider">Time Coded</th>
+                    </tr>
+                </thead>
+                <tbody id="leaderboardBody">
+                    <!-- Loader -->
+                    <tr id="loaderRow">
+                        <td colspan="3" class="p-8 text-center">
+                             <div class="loader ease-linear rounded-full border-4 border-t-4 border-gray-500 h-12 w-12 mx-auto"></div>
+                             <p class="mt-4 text-gray-400">Fetching data...</p>
+                        </td>
+                    </tr>
+                    <!-- Data will be inserted here by JavaScript -->
+                </tbody>
+            </table>
+             <div id="error-message" class="hidden p-4 text-center text-red-400 bg-red-900 bg-opacity-50"></div>
+        </div>
+        <footer class="text-center mt-6 text-gray-500 text-sm">
+            <p>Data provided by WakaTime API.</p>
+        </footer>
+    </div>
+    </div>
+
+    <script>
+        // Define the base URL for your backend API
+        const baseUrl = "https://wakatimebackend.vercel.app";
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const timeRangeToggle = document.getElementById('timeRangeToggle');
+            const leaderboardBody = document.getElementById('leaderboardBody');
+            const loaderRow = document.getElementById('loaderRow');
+            const errorMessageDiv = document.getElementById('error-message');
+
+            /**
+             * Fetches leaderboard data from the specified endpoint.
+             * This function is correctly marked as 'async'.
+             * @param {string} range - The time range ('today' or 'lastweek').
+             */
+            const fetchLeaderboardData = async (range = 'today') => {
+                // Show loader and hide old data/errors
+                loaderRow.style.display = 'table-row';
+                leaderboardBody.innerHTML = ''; // Clear previous data
+                leaderboardBody.appendChild(loaderRow); // Re-append loader after clearing
+                errorMessageDiv.classList.add('hidden'); // Hide any previous error messages
+
+                try {
+                    // The backend routes are /today and /lastweek
+                    console.log(`Fetching data from: ${baseUrl}/${range}`);
+                    const response = await fetch(`${baseUrl}/${range}`);
+                    console.log('Response status:', response.status);
+
+                    if (!response.ok) {
+                        // Log the full response text for more details on error
+                        const errorText = await response.text();
+                        console.error('HTTP error details:', errorText);
+                        throw new Error(`HTTP error! status: ${response.status} - ${errorText}`);
+                    }
+                    const result = await response.json();
+                    console.log('Raw API response data:', result);
+                    
+                    // The backend wraps data in a 'data' property
+                    let users = result.data;
+                    console.log('Users data extracted:', users);
+
+                    // Sort users by total_seconds in descending order
+                    // Ensure 'seconds' property exists and is treated as a number for sorting
+                    users.sort((a, b) => (b.seconds || 0) - (a.seconds || 0));
+                    console.log('Users data after sorting:', users);
+                    
+                    renderLeaderboard(users);
+                } catch (error) {
+                    console.error('Failed to fetch leaderboard data:', error);
+                    displayError('Could not retrieve data from the server. Please ensure the backend is running and check your browser console for CORS errors.');
+                } finally {
+                    // Hide loader
+                    loaderRow.style.display = 'none';
+                }
+            };
+
+            /**
+             * Renders the leaderboard data into the table.
+             * @param {Array<object>} users - The sorted array of user data.
+             */
+            const renderLeaderboard = (users) => {
+                leaderboardBody.innerHTML = ''; // Clear loader or previous data
+                
+                if (!users || users.length === 0) {
+                    leaderboardBody.innerHTML = `<tr><td colspan="3" class="text-center p-6 text-gray-400">No data available. Add a user to get started!</td></tr>`;
+                    return;
+                }
+
+                users.forEach((user, index) => {
+                    const rank = index + 1;
+                    // Apply specific colors for top 3 ranks
+                    const rankColor = rank === 1 ? 'text-yellow-400' : rank === 2 ? 'text-gray-300' : rank === 3 ? 'text-yellow-600' : 'text-gray-400';
+                    const row = document.createElement('tr');
+                    row.className = 'border-b border-gray-700 hover:bg-gray-700/50 transition-colors duration-200';
+                    
+                    row.innerHTML = `
+                        <td class="p-4 ${rankColor} table-rank">
+                           ${rank}
+                        </td>
+                        <td class="p-4 font-medium text-white">${user.name}</td>
+                        <td class="p-4 text-gray-300">${user.time}</td>
+                    `;
+                    leaderboardBody.appendChild(row);
+                });
+            };
+
+            /**
+             * Displays an error message in the UI.
+             * @param {string} message - The error message to display.
+             */
+            const displayError = (message) => {
+                leaderboardBody.innerHTML = ''; // Clear table content
+                errorMessageDiv.textContent = message;
+                errorMessageDiv.classList.remove('hidden');
+            };
+
+            // Event listener for the toggle switch
+            timeRangeToggle.addEventListener('change', () => {
+                const range = timeRangeToggle.checked ? 'lastweek' : 'today';
+                fetchLeaderboardData(range);
+            });
+
+            // Initial data fetch on page load
+            fetchLeaderboardData('today');
+        });
+    </script>
+
+</body>
+</html>
